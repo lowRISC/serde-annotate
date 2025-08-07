@@ -82,7 +82,7 @@ macro_rules! tester {
     }};
 }
 
-#[derive(Serialize, Deserialize, Annotate, Debug, PartialEq)]
+#[derive(Deserialize, Annotate, Debug, PartialEq)]
 struct Coordinate {
     #[annotate(format=hex, comment="X-coordinate")]
     pub x: u32,
@@ -161,7 +161,7 @@ struct Sfdp {
 }
 
 // Numbers in different bases, comments from functions within the impl.
-#[derive(Serialize, Deserialize, Annotate, Debug, PartialEq)]
+#[derive(Deserialize, Annotate, Debug, PartialEq)]
 struct SfdpHeader {
     #[annotate(format=hex, comment=_signature())]
     signature: u32,
@@ -255,7 +255,7 @@ fn test_sfdp() -> Result<()> {
     Ok(())
 }
 
-#[derive(Serialize, Deserialize, Annotate, Debug, PartialEq)]
+#[derive(Deserialize, Annotate, Debug, PartialEq)]
 enum NesAddress {
     #[annotate(format=compact, comment="NES file offset")]
     File(u32),
@@ -269,7 +269,7 @@ enum NesAddress {
 }
 
 // TODO(serde-annotate#6): Currently, we do not emit comments for newtype structs.
-#[derive(Serialize, Deserialize, Annotate, Debug, PartialEq)]
+#[derive(Deserialize, Annotate, Debug, PartialEq)]
 struct CpuAddress(#[annotate(format=hex, comment="CPU Address")] u16);
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
@@ -370,7 +370,7 @@ fn test_nes_addresses() -> Result<()> {
     Ok(())
 }
 
-#[derive(Serialize, Deserialize, Annotate, Debug, PartialEq)]
+#[derive(Deserialize, Annotate, Debug, PartialEq)]
 struct Poem {
     #[serde(with = "serde_bytes")]
     #[annotate(comment = "No special bytes encoding")]

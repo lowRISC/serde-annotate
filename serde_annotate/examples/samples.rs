@@ -4,7 +4,7 @@ use clap::{Parser, ValueEnum};
 use serde::{Deserialize, Serialize};
 use serde_annotate::{serialize, Annotate, ColorProfile};
 
-#[derive(Serialize, Deserialize, Annotate, Debug, PartialEq)]
+#[derive(Deserialize, Annotate, Debug, PartialEq)]
 struct Coordinate {
     #[annotate(format=hex, comment="X-coordinate")]
     pub x: u32,
@@ -21,7 +21,7 @@ struct Sfdp {
 }
 
 // Numbers in different bases, comments from functions within the impl.
-#[derive(Serialize, Deserialize, Annotate, Debug, PartialEq)]
+#[derive(Deserialize, Annotate, Debug, PartialEq)]
 struct SfdpHeader {
     #[annotate(format=hex, comment=_signature())]
     signature: u32,
@@ -46,7 +46,7 @@ impl SfdpHeader {
     }
 }
 
-#[derive(Serialize, Deserialize, Annotate, Debug, PartialEq)]
+#[derive(Deserialize, Annotate, Debug, PartialEq)]
 enum NesAddress {
     #[annotate(format=compact, comment="NES file offset")]
     File(u32),
@@ -63,7 +63,7 @@ struct Addresses {
     c: NesAddress,
 }
 
-#[derive(Serialize, Deserialize, Annotate, Debug, PartialEq)]
+#[derive(Deserialize, Annotate, Debug, PartialEq)]
 struct Everything {
     #[annotate(comment = "Basic String")]
     string: String,

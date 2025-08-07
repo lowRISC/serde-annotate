@@ -3,7 +3,7 @@ use anyhow::Result;
 use serde_annotate::serialize;
 use serde_annotate::Annotate;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize, Annotate)]
+#[derive(Debug, serde::Deserialize, Annotate)]
 struct Hello {
     #[annotate(comment = "A greeting")]
     message: String,
