@@ -4,12 +4,66 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Index, Member, Result};
 
-pub fn derive(node: &DeriveInput) -> Result<TokenStream> {
-    let input = Input::from_syn(node)?;
+pub fn derive(mut node: DeriveInput) -> Result<TokenStream> {
+    let input = Input::from_syn(&node)?;
 
-    Ok(match input {
+    let annotate_imp = match input {
         Input::Struct(input) => impl_struct(input),
         Input::Enum(input) => impl_enum(input),
+    };
+
+    // In addition to the `Annotate` implementation, we also want to generate a
+    // `serde::Serialize` implementation.
+    //
+    // We use `serde`'s `remote` attribute to put the derive implementation on a helper
+    // type so we can invoke at will.
+
+    let name = node.ident;
+    let helper = syn::Ident::new(&format!("{}Helper", name), name.span());
+
+    // Filter out all `#[annotate]` attributes from the derive inputs.
+    match &mut node.data {
+        syn::Data::Struct(data_struct) => {
+            for f in data_struct.fields.iter_mut() {
+                f.attrs.retain(|x| !x.path().is_ident("annotate"));
+            }
+        }
+        syn::Data::Enum(data_enum) => {
+            for v in data_enum.variants.iter_mut() {
+                v.attrs.retain(|x| !x.path().is_ident("annotate"));
+                for f in v.fields.iter_mut() {
+                    f.attrs.retain(|x| !x.path().is_ident("annotate"));
+                }
+            }
+        }
+        syn::Data::Union(_) => unreachable!(),
+    }
+    node.ident = helper.clone();
+
+    for attr in node.attrs.iter() {
+        if attr.path().is_ident("serde") {
+            return Err(syn::Error::new_spanned(attr, "use of `#[serde]` on type together with `#[derive(Annotate)]` is not yet supported"));
+        }
+    }
+
+    let name_str = syn::LitStr::new(&name.to_string(), name.span());
+    Ok(quote! {
+        const _: () = {
+            #annotate_imp
+
+            #[derive(::serde::Serialize)]
+            #[serde(remote = #name_str, rename = #name_str)]
+            #node
+
+            impl ::serde::Serialize for #name {
+                fn serialize<S>(&self, serializer: S) -> ::std::result::Result<S::Ok, S::Error>
+                where
+                    S: ::serde::Serializer
+                {
+                    #helper::serialize(self, serializer)
+                }
+            }
+        };
     })
 }
 
@@ -119,29 +173,27 @@ fn impl_struct(input: Struct) -> TokenStream {
     let comments = impl_field_comment(&input.fields);
     let name = &input.ident;
     quote! {
-        const _: () = {
-            extern crate serde_annotate;
-            use serde_annotate::annotate::{Annotate, Format, MemberId};
+        extern crate serde_annotate;
+        use serde_annotate::annotate::{Annotate, Format, MemberId};
 
-            impl Annotate for #name {
-                fn format(&self, _variant: Option<&str>, field: &MemberId) -> Option<Format> {
-                    match field {
-                        #(#formats,)*
-                        _ => None,
-                    }
+        impl Annotate for #name {
+            fn format(&self, _variant: Option<&str>, field: &MemberId) -> Option<Format> {
+                match field {
+                    #(#formats,)*
+                    _ => None,
                 }
-                fn comment(&self, _variant: Option<&str>, field: &MemberId) -> Option<String> {
-                    match field {
-                        #(#comments,)*
-                        _ => None,
-                    }
-                }
-                fn as_annotate(&self) -> Option<&dyn Annotate> { Some(self) }
-                // We don't have to implement `thunk_serialize` because the default implementation
-                // already does what we need.
             }
-            serde_annotate::annotate_ref!(#name);
-        };
+            fn comment(&self, _variant: Option<&str>, field: &MemberId) -> Option<String> {
+                match field {
+                    #(#comments,)*
+                    _ => None,
+                }
+            }
+            fn as_annotate(&self) -> Option<&dyn Annotate> { Some(self) }
+            // We don't have to implement `thunk_serialize` because the default implementation
+            // already does what we need.
+        }
+        serde_annotate::annotate_ref!(#name);
     }
 }
 
@@ -149,30 +201,28 @@ fn impl_enum(input: Enum) -> TokenStream {
     let (formats, comments) = impl_variants(&input.variants);
     let name = &input.ident;
     quote! {
-        const _: () = {
-            extern crate serde_annotate;
-            use serde_annotate::annotate::{Annotate, Format, MemberId};
+        extern crate serde_annotate;
+        use serde_annotate::annotate::{Annotate, Format, MemberId};
 
-            impl Annotate for #name {
-                fn format(&self, variant: Option<&str>, field: &MemberId) -> Option<Format> {
-                    let variant = variant?;
-                    match variant {
-                        #(#formats,)*
-                        _ => None,
-                    }
+        impl Annotate for #name {
+            fn format(&self, variant: Option<&str>, field: &MemberId) -> Option<Format> {
+                let variant = variant?;
+                match variant {
+                    #(#formats,)*
+                    _ => None,
                 }
-                fn comment(&self, variant: Option<&str>, field: &MemberId) -> Option<String> {
-                    let variant = variant?;
-                    match variant {
-                        #(#comments,)*
-                        _ => None,
-                    }
-                }
-                fn as_annotate(&self) -> Option<&dyn Annotate> { Some(self) }
-                // We don't have to implement `thunk_serialize` because the default implementation
-                // already does what we need.
             }
-            serde_annotate::annotate_ref!(#name);
-        };
+            fn comment(&self, variant: Option<&str>, field: &MemberId) -> Option<String> {
+                let variant = variant?;
+                match variant {
+                    #(#comments,)*
+                    _ => None,
+                }
+            }
+            fn as_annotate(&self) -> Option<&dyn Annotate> { Some(self) }
+            // We don't have to implement `thunk_serialize` because the default implementation
+            // already does what we need.
+        }
+        serde_annotate::annotate_ref!(#name);
     }
 }
