@@ -1,3 +1,4 @@
+#![feature(min_specialization)]
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_annotate::serialize;

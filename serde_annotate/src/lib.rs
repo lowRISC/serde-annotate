@@ -1,3 +1,5 @@
+#![feature(min_specialization)]
+
 pub mod annotate;
 mod color;
 mod de;
@@ -13,6 +15,7 @@ mod ser;
 mod yaml;
 
 pub use annotate::Annotate;
+pub use serde_annotate_derive::*;
 pub use color::ColorProfile;
 pub use de::{from_str, Deserialize, Deserializer};
 pub use doc_iter::DocPath;
@@ -21,5 +24,4 @@ pub use error::Error;
 pub use integer::{Base, Int, IntValue};
 pub use json::Json;
 pub use ser::{serialize, AnnotatedSerializer};
-pub use serde_annotate_derive::*;
 pub use yaml::Yaml;

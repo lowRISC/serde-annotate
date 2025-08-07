@@ -45,7 +45,6 @@ rust_test(
     deps = [
         "//serde_annotate",
         "@crate_index//:anyhow",
-        "@crate_index//:erased-serde",
         "@crate_index//:serde",
     ],
 )
