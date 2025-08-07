@@ -1,3 +1,5 @@
+use std::mem::ManuallyDrop;
+
 use serde::ser;
 
 use crate::annotate::{Annotate, Format, MemberId};
@@ -33,6 +35,43 @@ impl<'a> AnnotatedSerializer<'a> {
             bytesformat: BytesFormat::Standard,
             compact: false,
         }
+    }
+
+    /// Try to convert a generic `Serializer` into `Self`.
+    pub fn try_specialize<S: serde::Serializer>(
+        serializer: S,
+        ok: impl for<'b> FnOnce(&mut AnnotatedSerializer<'b>) -> Result<Document, Error>,
+        err: impl FnOnce(S) -> Result<S::Ok, S::Error>,
+    ) -> Result<S::Ok, S::Error> {
+        if typeid::of::<S>() == typeid::of::<&mut AnnotatedSerializer<'_>>() {
+            // SAFETY: If `serializer` is the correct type, then we can transmute the
+            // reference into `&mut AnnotatedSerializer`.
+            //
+            // For the lifetime, we observe that the lifetime on `ok` works for any lifetime.
+            // So the exact lifetime would not matter for the soundness.
+            let serializer: &mut AnnotatedSerializer =
+                unsafe { std::mem::transmute_copy(&ManuallyDrop::new(serializer)) };
+
+            let r = ok(serializer);
+
+            // SAFETY: Similarly, we can transmute the return value.
+            unsafe { std::mem::transmute_copy(&ManuallyDrop::new(r)) }
+        } else {
+            err(serializer)
+        }
+    }
+
+    /// Convert a generic `Serializer` into `Self`, panic on failure.
+    pub fn specialize<S: serde::Serializer>(
+        serializer: S,
+        f: impl for<'b> FnOnce(&mut AnnotatedSerializer<'b>) -> Result<Document, Error>,
+    ) -> Result<S::Ok, S::Error> {
+        Self::try_specialize(serializer, f, |_| {
+            panic!(
+                "Expected to be called by AnnotatedSerializer, not {:?}",
+                std::any::type_name::<S>(),
+            );
+        })
     }
 
     fn with_base(&self, b: Base) -> Self {

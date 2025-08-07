@@ -49,6 +49,7 @@ rust_library(
         "@crate_index//:regex",
         "@crate_index//:serde",
         "@crate_index//:thiserror",
+        "@crate_index//:typeid",
     ],
 )
 

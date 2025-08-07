@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::{AnnotatedSerializer, Deserializer, Document, Error};
+use crate::{AnnotatedSerializer, Document, Error};
 
 /// Specifies the formatting options to use when serializing.
 pub enum Format {
@@ -90,48 +90,6 @@ macro_rules! __annotate_ref {
     };
 }
 
-// We use a private trait to identify whether the Serializer passed to
-// various functions is our Serializer.
-pub(crate) unsafe trait IsSerializer {
-    fn is_serde_annotate(&self) -> bool;
-}
-
-unsafe impl<T: serde::Serializer> IsSerializer for T {
-    default fn is_serde_annotate(&self) -> bool {
-        false
-    }
-}
-
-unsafe impl<'a> IsSerializer for &mut AnnotatedSerializer<'a> {
-    fn is_serde_annotate(&self) -> bool {
-        true
-    }
-}
-
-// This marker trait is to avoid specifying lifetimes in the default
-// implementation.  When I specify lifetimes in the default impl, the
-// compiler complains that the specialized impl repeats parameter `'de`.
-trait _IsDeserializer {}
-impl<'de, T: serde::Deserializer<'de>> _IsDeserializer for T {}
-
-// We use a private trait to identify whether the Deserializer passed to
-// various functions is our Deserializer.
-pub(crate) unsafe trait IsDeserializer {
-    fn is_serde_annotate(&self) -> bool;
-}
-
-unsafe impl<T: _IsDeserializer> IsDeserializer for T {
-    default fn is_serde_annotate(&self) -> bool {
-        false
-    }
-}
-
-unsafe impl<'de> IsDeserializer for &mut Deserializer<'de> {
-    fn is_serde_annotate(&self) -> bool {
-        true
-    }
-}
-
 // Dime-store type erasure: Implement serde::Serialize on the Annotate trait object
 // so one can pass the trait objects into `serde_annotate::serialize()` and get
 // serialized objects out.  I'm doing this because:
@@ -144,29 +102,7 @@ unsafe impl<'de> IsDeserializer for &mut Deserializer<'de> {
 // AnnotatedSerializer and just force the types with `transmute`.
 impl serde::Serialize for dyn Annotate {
     fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        if !serializer.is_serde_annotate() {
-            panic!(
-                "Expected to be called by AnnotatedSerializer, not {:?}",
-                std::any::type_name::<S>()
-            );
-        }
-        unsafe {
-            // If `serializer` is the correct type, then we can transmute the
-            // reference into `&mut AnnotatedSerializer` and forget the prior reference.
-            let szr: &mut AnnotatedSerializer = std::mem::transmute_copy(&serializer);
-            std::mem::forget(serializer);
-            let r = self.thunk_serialize(szr);
-            // Similarly, if the `serializer` was the correct type, we can assume the
-            // return type will be correct, and thus the transmute is a no-op... Actually,
-            // its a simple copy because `transmute` can't be sure that
-            // `Result<Document, Error>` is the same size as whatever
-            // `Result<S::Ok, S::Error>` happens to be.  They _will_ be the same size
-            // (indeed the same type) because only `AnnotatedSerializer` is permitted to
-            // call this function and it wants `Result<Document, Error>` returned).
-            let result = std::mem::transmute_copy(&r);
-            std::mem::forget(r);
-            result
-        }
+        AnnotatedSerializer::specialize(serializer, |serializer| self.thunk_serialize(serializer))
     }
 }
 

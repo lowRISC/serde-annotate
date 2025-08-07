@@ -1,5 +1,7 @@
 // Deserializer for serde-annotate `Document`s.
 
+use std::mem::ManuallyDrop;
+
 use serde::de::{
     self, DeserializeOwned, DeserializeSeed, EnumAccess, IntoDeserializer, MapAccess, SeqAccess,
     VariantAccess, Visitor,
@@ -10,7 +12,7 @@ use crate::document::Document;
 use crate::error::Error;
 use crate::hexdump;
 
-type Result<T> = std::result::Result<T, Error>;
+type Result<T, E = Error> = std::result::Result<T, E>;
 
 /// Deserialize an owned document.
 pub struct Deserialize {
@@ -68,6 +70,32 @@ impl<'de> Deserializer<'de> {
         Ok(Deserializer {
             doc: doc.as_value()?,
         })
+    }
+
+    /// Try to convert a generic `Serializer` into `Self`.
+    pub fn try_specialize<D: serde::Deserializer<'de>, T>(
+        deserializer: D,
+        ok: impl FnOnce(&mut Self) -> Result<T>,
+        err: impl FnOnce(D) -> Result<T, D::Error>,
+    ) -> Result<T, D::Error> {
+        if typeid::of::<D>() == typeid::of::<&mut Self>() {
+            // SAFETY: If `deserializer` is the correct type, then we can transmute the
+            // reference into `&mut Deserializer`.
+            //
+            // For the lifetime, we observe that the lifetime on `ok` works for any lifetime.
+            // So the exact lifetime on the `&mut` would not matter for the soundness.
+            // We observe that `D: Deserializer<'de>`, so we can infer that `'d` is correct for
+            // the lifetime parameter.
+            let deserializer: &mut Self =
+                unsafe { std::mem::transmute_copy(&ManuallyDrop::new(deserializer)) };
+
+            let r = ok(deserializer);
+
+            // SAFETY: Similarly, we can transmute the return value.
+            unsafe { std::mem::transmute_copy(&ManuallyDrop::new(r)) }
+        } else {
+            err(deserializer)
+        }
     }
 }
 
