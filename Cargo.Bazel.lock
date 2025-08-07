@@ -1,5 +1,5 @@
 {
-  "checksum": "d25b71cb8422c2cc372f8d16d141b4bde19d8572657286081c22c02b1873bfc4",
+  "checksum": "11fd39c48801bbb8ed98ddca712105c1be227b586f6694e4685c2e5dc5652045",
   "crates": {
     "aho-corasick 1.1.3": {
       "name": "aho-corasick",
@@ -2072,6 +2072,10 @@
             {
               "id": "thiserror 1.0.58",
               "target": "thiserror"
+            },
+            {
+              "id": "typeid 1.0.3",
+              "target": "typeid"
             }
           ],
           "selects": {}
@@ -2643,6 +2647,59 @@
         },
         "edition": "2021",
         "version": "1.0.58"
+      },
+      "license": "MIT OR Apache-2.0"
+    },
+    "typeid 1.0.3": {
+      "name": "typeid",
+      "version": "1.0.3",
+      "repository": {
+        "Http": {
+          "url": "https://static.crates.io/crates/typeid/1.0.3/download",
+          "sha256": "bc7d623258602320d5c55d1bc22793b57daff0ec7efc270ea7d55ce1d5f5471c"
+        }
+      },
+      "targets": [
+        {
+          "Library": {
+            "crate_name": "typeid",
+            "crate_root": "src/lib.rs",
+            "srcs": [
+              "**/*.rs"
+            ]
+          }
+        },
+        {
+          "BuildScript": {
+            "crate_name": "build_script_build",
+            "crate_root": "build.rs",
+            "srcs": [
+              "**/*.rs"
+            ]
+          }
+        }
+      ],
+      "library_target_name": "typeid",
+      "common_attrs": {
+        "compile_data_glob": [
+          "**"
+        ],
+        "deps": {
+          "common": [
+            {
+              "id": "typeid 1.0.3",
+              "target": "build_script_build"
+            }
+          ],
+          "selects": {}
+        },
+        "edition": "2018",
+        "version": "1.0.3"
+      },
+      "build_script_attrs": {
+        "data_glob": [
+          "**"
+        ]
       },
       "license": "MIT OR Apache-2.0"
     },
