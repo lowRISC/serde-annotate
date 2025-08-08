@@ -31,13 +31,43 @@ pub enum MemberId<'a> {
     Variant,
 }
 
+/// Trait indicating a type can be serialized by `AnnotatedSerialize`.
+///
+/// This is specialized version of `Serialize` trait that operates only on `AnnotatedSerializer`,
+/// so it is dyn-safe.
+pub trait AnnotateSerialize {
+    fn annotated_serialize(&self, serializer: &mut AnnotatedSerializer) -> Result<Document, Error>;
+}
+
+impl<T: serde::Serialize + ?Sized> AnnotateSerialize for T {
+    fn annotated_serialize(&self, serializer: &mut AnnotatedSerializer) -> Result<Document, Error> {
+        self.serialize(serializer)
+    }
+}
+
+impl serde::Serialize for dyn AnnotateSerialize {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        AnnotatedSerializer::specialize(serializer, |serializer| {
+            self.annotated_serialize(serializer)
+        })
+    }
+}
+
+impl fmt::Debug for dyn AnnotateSerialize {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "dyn AnnotateSerialize({:p})", self)
+    }
+}
+
 /// Trait implemented on structs to inform the serializer about formatting
 /// options and comments.
-pub trait Annotate {
+pub trait Annotate: AnnotateSerialize {
     fn format(&self, variant: Option<&str>, field: &MemberId) -> Option<Format>;
     fn comment(&self, variant: Option<&str>, field: &MemberId) -> Option<String>;
     fn as_annotate(&self) -> Option<&dyn Annotate>;
-    fn thunk_serialize(&self, serializer: &mut AnnotatedSerializer) -> Result<Document, Error>;
 }
 
 /// The default implementation of Annotate returns no comments or annotations and
@@ -51,12 +81,6 @@ impl<T: ?Sized + serde::Serialize> Annotate for T {
     }
     default fn as_annotate(&self) -> Option<&dyn Annotate> {
         None
-    }
-    default fn thunk_serialize(
-        &self,
-        serializer: &mut AnnotatedSerializer,
-    ) -> Result<Document, Error> {
-        self.serialize(serializer)
     }
 }
 
@@ -88,26 +112,4 @@ macro_rules! __annotate_ref {
             }
         }
     };
-}
-
-// Dime-store type erasure: Implement serde::Serialize on the Annotate trait object
-// so one can pass the trait objects into `serde_annotate::serialize()` and get
-// serialized objects out.  I'm doing this because:
-// - Without some sort of `TypeId` support for non-`'static` types, its impossible
-//   to properly determine if they implement `Annotate`.
-// - Without some `TypeId` rememberance added into `erased-serde`, its impossible
-//   to properly determine if the type-erased object implemented `Annotate`.
-//
-// The strategy here (the dime-store part) is to assume the serializer will be
-// AnnotatedSerializer and just force the types with `transmute`.
-impl serde::Serialize for dyn Annotate {
-    fn serialize<S: serde::Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        AnnotatedSerializer::specialize(serializer, |serializer| self.thunk_serialize(serializer))
-    }
-}
-
-impl fmt::Debug for dyn Annotate {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "dyn Annotate({:p})", self)
-    }
 }
