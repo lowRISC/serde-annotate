@@ -60,7 +60,11 @@ pub fn derive(mut node: DeriveInput) -> Result<TokenStream> {
                 where
                     S: ::serde::Serializer
                 {
-                    #helper::serialize(self, serializer)
+                    ::serde_annotate::AnnotatedSerializer::try_specialize(
+                        serializer,
+                        |serializer| #helper::serialize(self, &mut serializer.with_annotate(self)),
+                        |serializer| #helper::serialize(self, serializer)
+                    )
                 }
             }
         };
@@ -189,9 +193,7 @@ fn impl_struct(input: Struct) -> TokenStream {
                     _ => None,
                 }
             }
-            fn as_annotate(&self) -> Option<&dyn Annotate> { Some(self) }
         }
-        serde_annotate::annotate_ref!(#name);
     }
 }
 
@@ -217,8 +219,6 @@ fn impl_enum(input: Enum) -> TokenStream {
                     _ => None,
                 }
             }
-            fn as_annotate(&self) -> Option<&dyn Annotate> { Some(self) }
         }
-        serde_annotate::annotate_ref!(#name);
     }
 }

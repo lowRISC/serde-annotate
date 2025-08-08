@@ -12,8 +12,7 @@ pub fn serialize<T>(value: &T) -> Result<Document, Error>
 where
     T: ?Sized + ser::Serialize,
 {
-    let mut ser = AnnotatedSerializer::new(value.as_annotate());
-    value.serialize(&mut ser)
+    value.serialize(&mut AnnotatedSerializer::new())
 }
 
 /// Serializer adapter that adds user-annotatons to the serialized document.
@@ -27,9 +26,9 @@ pub struct AnnotatedSerializer<'a> {
 }
 
 impl<'a> AnnotatedSerializer<'a> {
-    pub fn new(annotator: Option<&'a dyn Annotate>) -> Self {
+    pub fn new() -> Self {
         AnnotatedSerializer {
-            annotator,
+            annotator: None,
             base: Base::Dec,
             strformat: StrFormat::Standard,
             bytesformat: BytesFormat::Standard,
@@ -72,6 +71,14 @@ impl<'a> AnnotatedSerializer<'a> {
                 std::any::type_name::<S>(),
             );
         })
+    }
+
+    /// Obtain a serializer with a new annotation type.
+    pub fn with_annotate<'b, T: Annotate>(&self, value: &'b T) -> AnnotatedSerializer<'b> {
+        AnnotatedSerializer {
+            annotator: Some(value),
+            ..self.clone()
+        }
     }
 
     fn with_base(&self, b: Base) -> Self {
@@ -124,7 +131,6 @@ impl<'a> AnnotatedSerializer<'a> {
         T: ?Sized + ser::Serialize,
     {
         let mut ser = ser.unwrap_or(self.clone());
-        ser.annotator = value.as_annotate();
         value.serialize(&mut ser)
     }
 }

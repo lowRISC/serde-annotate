@@ -67,49 +67,4 @@ impl fmt::Debug for dyn AnnotateSerialize {
 pub trait Annotate: AnnotateSerialize {
     fn format(&self, variant: Option<&str>, field: &MemberId) -> Option<Format>;
     fn comment(&self, variant: Option<&str>, field: &MemberId) -> Option<String>;
-    fn as_annotate(&self) -> Option<&dyn Annotate>;
-}
-
-/// The default implementation of Annotate returns no comments or annotations and
-/// cannot return the trait object.
-impl<T: ?Sized + serde::Serialize> Annotate for T {
-    default fn format(&self, _variant: Option<&str>, _field: &MemberId) -> Option<Format> {
-        None
-    }
-    default fn comment(&self, _variant: Option<&str>, _field: &MemberId) -> Option<String> {
-        None
-    }
-    default fn as_annotate(&self) -> Option<&dyn Annotate> {
-        None
-    }
-}
-
-// Serde explicitly implements Serialize on &T where T: Serialize.  This
-// causes min_specialization to select the default implementation for &T
-// even though there is a specialized implementation available for T.
-//
-// The annotate_derive crate uses this macro to create the additional
-// specializations needed.
-#[macro_export]
-macro_rules! annotate_ref {
-    ($ty:ty) => {
-        $crate::__annotate_ref!(&$ty);
-    };
-}
-
-#[macro_export]
-macro_rules! __annotate_ref {
-    ($ty:ty) => {
-        impl Annotate for $ty {
-            fn format(&self, variant: Option<&str>, field: &MemberId) -> Option<Format> {
-                (**self).format(variant, field)
-            }
-            fn comment(&self, variant: Option<&str>, field: &MemberId) -> Option<String> {
-                (**self).comment(variant, field)
-            }
-            fn as_annotate(&self) -> Option<&dyn Annotate> {
-                (**self).as_annotate()
-            }
-        }
-    };
 }

@@ -1,4 +1,3 @@
-#![feature(min_specialization)]
 use anyhow::Result;
 use serde_annotate::serialize;
 use serde_annotate::{Document, StrFormat};

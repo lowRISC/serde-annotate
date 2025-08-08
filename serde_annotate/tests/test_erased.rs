@@ -1,4 +1,3 @@
-#![feature(min_specialization)]
 use anyhow::Result;
 use serde_annotate::serialize;
 use serde_annotate::{Annotate, AnnotateSerialize};
@@ -16,7 +15,6 @@ fn hello() -> Box<dyn AnnotateSerialize> {
 }
 
 #[test]
-#[ignore]
 fn test_erased_serialization_regular() -> Result<()> {
     let greeting = hello();
     let s = serialize(&*greeting)?.to_json5().to_string();
