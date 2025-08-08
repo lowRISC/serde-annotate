@@ -6,7 +6,7 @@ impl Document {
     ///
     /// When encountering a container node (mapping, sequence or fragment),
     /// the container node is yielded first, then all of its children.
-    pub fn iter(&self) -> DocIter {
+    pub fn iter(&self) -> DocIter<'_> {
         let v = std::slice::from_ref(self);
         DocIter {
             stack: vec![v.iter()],
@@ -15,7 +15,7 @@ impl Document {
 
     /// Returns an iterator over all value nodes in the document.
     /// The iterator yields tuples of (object-path, value-node).
-    pub fn iter_path(&self) -> DocPathIter {
+    pub fn iter_path(&self) -> DocPathIter<'_> {
         let v = std::slice::from_ref(self);
         DocPathIter {
             stack: vec![v.iter()],
@@ -26,7 +26,7 @@ impl Document {
 
     /// Returns a mutable iterator over all value nodes in the document.
     /// The iterator yields tuples of (object-path, value-node).
-    pub fn iter_path_mut(&mut self) -> DocPathIterMut {
+    pub fn iter_path_mut(&mut self) -> DocPathIterMut<'_> {
         let v = std::slice::from_mut(self);
         DocPathIterMut {
             stack: vec![v.iter_mut()],
