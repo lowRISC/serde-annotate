@@ -1,5 +1,3 @@
-#![feature(min_specialization)]
-
 pub mod annotate;
 mod color;
 mod de;

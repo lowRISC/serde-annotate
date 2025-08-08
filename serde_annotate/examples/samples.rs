@@ -1,4 +1,3 @@
-#![feature(min_specialization)]
 use anyhow::{anyhow, Result};
 use clap::{Parser, ValueEnum};
 use serde::{Deserialize, Serialize};
