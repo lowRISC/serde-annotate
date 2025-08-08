@@ -74,15 +74,15 @@ pub fn derive(mut node: DeriveInput) -> Result<TokenStream> {
 fn impl_format(a: &Attrs) -> TokenStream {
     match &a.format {
         Format::None => quote! { None },
-        Format::Block => quote! { Some(Format::Block) },
-        Format::Binary => quote! { Some(Format::Binary) },
-        Format::Decimal => quote! { Some(Format::Decimal) },
-        Format::Hex => quote! { Some(Format::Hex) },
-        Format::Octal => quote! { Some(Format::Octal) },
-        Format::Compact => quote! { Some(Format::Compact) },
-        Format::HexStr => quote! { Some(Format::HexStr) },
-        Format::Hexdump => quote! { Some(Format::Hexdump) },
-        Format::Xxd => quote! { Some(Format::Xxd) },
+        Format::Block => quote! { Some(::serde_annotate::annotate::Format::Block) },
+        Format::Binary => quote! { Some(::serde_annotate::annotate::Format::Binary) },
+        Format::Decimal => quote! { Some(::serde_annotate::annotate::Format::Decimal) },
+        Format::Hex => quote! { Some(::serde_annotate::annotate::Format::Hex) },
+        Format::Octal => quote! { Some(::serde_annotate::annotate::Format::Octal) },
+        Format::Compact => quote! { Some(::serde_annotate::annotate::Format::Compact) },
+        Format::HexStr => quote! { Some(::serde_annotate::annotate::Format::HexStr) },
+        Format::Hexdump => quote! { Some(::serde_annotate::annotate::Format::Hexdump) },
+        Format::Xxd => quote! { Some(::serde_annotate::annotate::Format::Xxd) },
     }
 }
 
@@ -94,10 +94,10 @@ fn impl_field_format(fields: &[Field]) -> Vec<TokenStream> {
             match &f.member {
                 Member::Named(id) => {
                     let id = id.to_string();
-                    quote! { MemberId::Name(#id) => #format }
+                    quote! { ::serde_annotate::annotate::MemberId::Name(#id) => #format }
                 }
                 Member::Unnamed(Index { index: i, .. }) => {
-                    quote! { MemberId::Index(#i) => #format }
+                    quote! { ::serde_annotate::annotate::MemberId::Index(#i) => #format }
                 }
             }
         })
@@ -127,10 +127,10 @@ fn impl_field_comment(fields: &[Field]) -> Vec<TokenStream> {
             match &f.member {
                 Member::Named(id) => {
                     let id = id.to_string();
-                    quote! { MemberId::Name(#id) => #comment }
+                    quote! { ::serde_annotate::annotate::MemberId::Name(#id) => #comment }
                 }
                 Member::Unnamed(Index { index: i, .. }) => {
-                    quote! { MemberId::Index(#i) => #comment }
+                    quote! { ::serde_annotate::annotate::MemberId::Index(#i) => #comment }
                 }
             }
         })
@@ -146,7 +146,7 @@ fn impl_variants(variants: &[Variant]) -> (Vec<TokenStream>, Vec<TokenStream>) {
             let vformat = impl_format(&v.attrs);
             quote! {
                 #variant => match field {
-                    MemberId::Variant => #vformat,
+                    ::serde_annotate::annotate::MemberId::Variant => #vformat,
                     #(#formats,)*
                     _ => None,
                 }
@@ -161,7 +161,7 @@ fn impl_variants(variants: &[Variant]) -> (Vec<TokenStream>, Vec<TokenStream>) {
             let vcomment = impl_comment(&v.attrs);
             quote! {
                 #variant => match field {
-                    MemberId::Variant => #vcomment,
+                    ::serde_annotate::annotate::MemberId::Variant => #vcomment,
                     #(#comments,)*
                     _ => None,
                 }
@@ -177,17 +177,14 @@ fn impl_struct(input: Struct) -> TokenStream {
     let comments = impl_field_comment(&input.fields);
     let name = &input.ident;
     quote! {
-        extern crate serde_annotate;
-        use serde_annotate::annotate::{Annotate, Format, MemberId};
-
-        impl Annotate for #name {
-            fn format(&self, _variant: Option<&str>, field: &MemberId) -> Option<Format> {
+        impl ::serde_annotate::annotate::Annotate for #name {
+            fn format(&self, _variant: Option<&str>, field: &::serde_annotate::annotate::MemberId) -> Option<::serde_annotate::annotate::Format> {
                 match field {
                     #(#formats,)*
                     _ => None,
                 }
             }
-            fn comment(&self, _variant: Option<&str>, field: &MemberId) -> Option<String> {
+            fn comment(&self, _variant: Option<&str>, field: &::serde_annotate::annotate::MemberId) -> Option<String> {
                 match field {
                     #(#comments,)*
                     _ => None,
@@ -201,18 +198,15 @@ fn impl_enum(input: Enum) -> TokenStream {
     let (formats, comments) = impl_variants(&input.variants);
     let name = &input.ident;
     quote! {
-        extern crate serde_annotate;
-        use serde_annotate::annotate::{Annotate, Format, MemberId};
-
-        impl Annotate for #name {
-            fn format(&self, variant: Option<&str>, field: &MemberId) -> Option<Format> {
+        impl ::serde_annotate::annotate::Annotate for #name {
+            fn format(&self, variant: Option<&str>, field: &::serde_annotate::annotate::MemberId) -> Option<::serde_annotate::annotate::Format> {
                 let variant = variant?;
                 match variant {
                     #(#formats,)*
                     _ => None,
                 }
             }
-            fn comment(&self, variant: Option<&str>, field: &MemberId) -> Option<String> {
+            fn comment(&self, variant: Option<&str>, field: &::serde_annotate::annotate::MemberId) -> Option<String> {
                 let variant = variant?;
                 match variant {
                     #(#comments,)*
