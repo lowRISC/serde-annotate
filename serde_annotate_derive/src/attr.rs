@@ -30,7 +30,7 @@ pub struct Attrs<'a> {
     pub comment: Comment,
 }
 
-pub fn get(input: &[Attribute]) -> Result<Attrs> {
+pub fn get(input: &[Attribute]) -> Result<Attrs<'_>> {
     let mut attrs = Attrs {
         annotate: None,
         format: Format::None,

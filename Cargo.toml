@@ -1,4 +1,5 @@
 [workspace]
+resolver = "2"
 members = [
     "serde_annotate",
     "serde_annotate_derive",

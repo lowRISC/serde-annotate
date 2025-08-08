@@ -1,8 +1,6 @@
 use crate::attr::{self, Attrs};
 use proc_macro2::Span;
-use syn::{
-    Data, DataEnum, DataStruct, DeriveInput, Error, Fields, Ident, Index, Member, Result, Type,
-};
+use syn::{Data, DataEnum, DataStruct, DeriveInput, Error, Fields, Ident, Index, Member, Result};
 
 #[derive(Debug)]
 pub enum Input<'a> {
@@ -12,7 +10,7 @@ pub enum Input<'a> {
 
 #[derive(Debug)]
 pub struct Struct<'a> {
-    pub original: &'a DeriveInput,
+    #[allow(unused)]
     pub attrs: Attrs<'a>,
     pub ident: Ident,
     pub fields: Vec<Field<'a>>,
@@ -20,15 +18,13 @@ pub struct Struct<'a> {
 
 #[derive(Debug)]
 pub struct Field<'a> {
-    pub original: &'a syn::Field,
     pub attrs: Attrs<'a>,
     pub member: Member,
-    pub ty: &'a Type,
 }
 
 #[derive(Debug)]
 pub struct Enum<'a> {
-    pub original: &'a DeriveInput,
+    #[allow(unused)]
     pub attrs: Attrs<'a>,
     pub ident: Ident,
     pub variants: Vec<Variant<'a>>,
@@ -36,7 +32,6 @@ pub struct Enum<'a> {
 
 #[derive(Debug)]
 pub struct Variant<'a> {
-    pub original: &'a syn::Variant,
     pub attrs: Attrs<'a>,
     pub ident: Ident,
     pub fields: Vec<Field<'a>>,
@@ -58,7 +53,6 @@ impl<'a> Struct<'a> {
         let span = Span::call_site();
         let fields = Field::multiple_from_syn(&data.fields, span)?;
         Ok(Struct {
-            original: node,
             attrs,
             ident: node.ident.clone(),
             fields,
@@ -79,7 +73,6 @@ impl<'a> Enum<'a> {
             })
             .collect::<Result<_>>()?;
         Ok(Enum {
-            original: node,
             attrs,
             ident: node.ident.clone(),
             variants,
@@ -98,7 +91,6 @@ impl<'a> Field<'a> {
 
     fn from_syn(i: usize, node: &'a syn::Field, span: Span) -> Result<Self> {
         Ok(Field {
-            original: node,
             attrs: attr::get(&node.attrs)?,
             member: node.ident.clone().map(Member::Named).unwrap_or_else(|| {
                 Member::Unnamed(Index {
@@ -106,7 +98,6 @@ impl<'a> Field<'a> {
                     span,
                 })
             }),
-            ty: &node.ty,
         })
     }
 }
@@ -115,7 +106,6 @@ impl<'a> Variant<'a> {
     fn from_syn(node: &'a syn::Variant, span: Span) -> Result<Self> {
         let attrs = attr::get(&node.attrs)?;
         Ok(Variant {
-            original: node,
             attrs,
             ident: node.ident.clone(),
             fields: Field::multiple_from_syn(&node.fields, span)?,
