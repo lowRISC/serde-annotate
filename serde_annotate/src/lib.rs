@@ -14,7 +14,7 @@ mod relax;
 mod ser;
 mod yaml;
 
-pub use annotate::Annotate;
+pub use annotate::{Annotate, AnnotateSerialize};
 pub use color::ColorProfile;
 pub use de::{from_str, Deserialize, Deserializer};
 pub use doc_iter::DocPath;

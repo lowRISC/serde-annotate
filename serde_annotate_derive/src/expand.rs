@@ -190,8 +190,6 @@ fn impl_struct(input: Struct) -> TokenStream {
                 }
             }
             fn as_annotate(&self) -> Option<&dyn Annotate> { Some(self) }
-            // We don't have to implement `thunk_serialize` because the default implementation
-            // already does what we need.
         }
         serde_annotate::annotate_ref!(#name);
     }
@@ -220,8 +218,6 @@ fn impl_enum(input: Enum) -> TokenStream {
                 }
             }
             fn as_annotate(&self) -> Option<&dyn Annotate> { Some(self) }
-            // We don't have to implement `thunk_serialize` because the default implementation
-            // already does what we need.
         }
         serde_annotate::annotate_ref!(#name);
     }
