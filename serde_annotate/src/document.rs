@@ -132,7 +132,7 @@ impl Document {
 
     /// Returns a mutable list of fragments in this node.
     pub fn fragments_mut(&mut self) -> Result<&mut [Document], Error> {
-        if let Document::Fragment(ref mut f) = self {
+        if let Document::Fragment(f) = self {
             Ok(f)
         } else {
             Err(Error::StructureError("Fragment", self.variant()))
