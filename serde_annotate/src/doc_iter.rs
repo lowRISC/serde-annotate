@@ -123,7 +123,7 @@ impl<'a> Iterator for DocPathIter<'a> {
                 }
                 Some(Document::Fragment(f)) => {
                     match self.path.last_mut() {
-                        Some(DocPath::Name(ref mut n)) => match val.unwrap().as_kv() {
+                        Some(DocPath::Name(n)) => match val.unwrap().as_kv() {
                             Ok((k, v)) => {
                                 *n = k.as_str().expect("DocPath key");
                                 self.stack.push(std::slice::from_ref(v).iter());
@@ -141,7 +141,7 @@ impl<'a> Iterator for DocPathIter<'a> {
                     self.aggregate.push(false);
                 }
                 Some(_) => {
-                    if let Some(DocPath::Index(ref mut i)) = self.path.last_mut() {
+                    if let Some(DocPath::Index(i)) = self.path.last_mut() {
                         *i = i.wrapping_add(1);
                     }
                     return Some((self.path.clone(), val.unwrap()));
@@ -175,14 +175,14 @@ impl<'a> Iterator for DocPathIterMut<'a> {
                     self.path.push(DocPath::Index(usize::MAX));
                     self.aggregate.push(true);
                 }
-                Some(Document::Compact(ref mut v)) => {
+                Some(Document::Compact(v)) => {
                     self.stack.push(std::slice::from_mut(&mut **v).iter_mut());
                     self.aggregate.push(false);
                 }
                 Some(Document::Fragment(_)) => {
                     let val = val.unwrap();
                     match self.path.last_mut() {
-                        Some(DocPath::Name(ref mut n)) => match val.as_kv_mut() {
+                        Some(DocPath::Name(n)) => match val.as_kv_mut() {
                             Ok((k, v)) => {
                                 *n = k.as_str().expect("DocPath key");
                                 self.stack.push(std::slice::from_mut(v).iter_mut());
@@ -201,7 +201,7 @@ impl<'a> Iterator for DocPathIterMut<'a> {
                     self.aggregate.push(false);
                 }
                 Some(_) => {
-                    if let Some(DocPath::Index(ref mut i)) = self.path.last_mut() {
+                    if let Some(DocPath::Index(i)) = self.path.last_mut() {
                         *i = i.wrapping_add(1);
                     }
                     return Some((self.path.clone(), val.unwrap()));
