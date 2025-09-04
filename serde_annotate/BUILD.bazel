@@ -47,6 +47,7 @@ rust_library(
         "@crate_index//:once_cell",
         "@crate_index//:pest",
         "@crate_index//:regex",
+        "@crate_index//:scopeguard",
         "@crate_index//:serde",
         "@crate_index//:thiserror",
         "@crate_index//:typeid",

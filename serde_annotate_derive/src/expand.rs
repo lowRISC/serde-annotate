@@ -60,10 +60,8 @@ pub fn derive(mut node: DeriveInput) -> Result<TokenStream> {
                 where
                     S: ::serde::Serializer
                 {
-                    ::serde_annotate::AnnotatedSerializer::try_specialize(
-                        serializer,
-                        |serializer| #helper::serialize(self, &mut serializer.with_annotate(self)),
-                        |serializer| #helper::serialize(self, serializer)
+                    ::serde_annotate::AnnotatedSerializer::with(Some(self), |_|
+                        #helper::serialize(self, serializer)
                     )
                 }
             }
