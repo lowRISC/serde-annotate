@@ -1,6 +1,7 @@
 use anyhow::Result;
+use erased_serde::Serialize;
 use serde_annotate::serialize;
-use serde_annotate::{Annotate, AnnotateSerialize};
+use serde_annotate::Annotate;
 
 #[derive(Debug, serde::Deserialize, Annotate)]
 struct Hello {
@@ -8,7 +9,7 @@ struct Hello {
     message: String,
 }
 
-fn hello() -> Box<dyn AnnotateSerialize> {
+fn hello() -> Box<dyn Serialize> {
     Box::new(Hello {
         message: "Hello World!".into(),
     })
@@ -27,7 +28,7 @@ struct NestedHello {
     greeting: Hello,
 }
 
-fn nested_hello() -> Box<dyn AnnotateSerialize> {
+fn nested_hello() -> Box<dyn Serialize> {
     let n = NestedHello {
         greeting: Hello {
             message: "Hola!".into(),
