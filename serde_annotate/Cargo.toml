@@ -8,7 +8,6 @@ anstyle = "1.0"
 thiserror = "1.0"
 num-traits = "0.2.15"
 serde = "1.0"
-typeid = "1"
 once_cell = "1.12"
 serde_annotate_derive = {path = "../serde_annotate_derive"}
 pest = "2.2"
