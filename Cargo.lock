@@ -400,7 +400,6 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "thiserror",
- "typeid",
 ]
 
 [[package]]

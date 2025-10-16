@@ -1,7 +1,3 @@
-use std::fmt;
-
-use crate::{AnnotatedSerializer, Document, Error};
-
 /// Specifies the formatting options to use when serializing.
 pub enum Format {
     /// Format a string in block/multiline style.
@@ -31,40 +27,9 @@ pub enum MemberId<'a> {
     Variant,
 }
 
-/// Trait indicating a type can be serialized by `AnnotatedSerialize`.
-///
-/// This is specialized version of `Serialize` trait that operates only on `AnnotatedSerializer`,
-/// so it is dyn-safe.
-pub trait AnnotateSerialize {
-    fn annotated_serialize(&self, serializer: &mut AnnotatedSerializer) -> Result<Document, Error>;
-}
-
-impl<T: serde::Serialize + ?Sized> AnnotateSerialize for T {
-    fn annotated_serialize(&self, serializer: &mut AnnotatedSerializer) -> Result<Document, Error> {
-        self.serialize(serializer)
-    }
-}
-
-impl serde::Serialize for dyn AnnotateSerialize {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        AnnotatedSerializer::specialize(serializer, |serializer| {
-            self.annotated_serialize(serializer)
-        })
-    }
-}
-
-impl fmt::Debug for dyn AnnotateSerialize {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "dyn AnnotateSerialize({:p})", self)
-    }
-}
-
 /// Trait implemented on structs to inform the serializer about formatting
 /// options and comments.
-pub trait Annotate: AnnotateSerialize {
+pub trait Annotate {
     fn format(&self, variant: Option<&str>, field: &MemberId) -> Option<Format>;
     fn comment(&self, variant: Option<&str>, field: &MemberId) -> Option<String>;
 }

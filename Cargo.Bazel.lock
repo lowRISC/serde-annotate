@@ -1,5 +1,5 @@
 {
-  "checksum": "fb64f56ffe49bf513c5c452aa608fee4b8bb1d9c1c9448e0a898baa7b7db8294",
+  "checksum": "30966b16f4d4befb4a3d4e8958940a723b5bb9d99bb61475a460e972be60014c",
   "crates": {
     "aho-corasick 1.1.3": {
       "name": "aho-corasick",
@@ -2193,10 +2193,6 @@
             {
               "id": "thiserror 1.0.58",
               "target": "thiserror"
-            },
-            {
-              "id": "typeid 1.0.3",
-              "target": "typeid"
             }
           ],
           "selects": {}

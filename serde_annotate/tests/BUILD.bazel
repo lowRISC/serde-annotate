@@ -49,18 +49,3 @@ rust_test(
         "@crate_index//:serde",
     ],
 )
-
-rust_test(
-    name = "test_partial",
-    srcs = ["test_partial.rs"],
-    edition = "2021",
-    proc_macro_deps = [
-        "//serde_annotate_derive",
-    ],
-    deps = [
-        "//serde_annotate",
-        "@crate_index//:anyhow",
-        "@crate_index//:serde",
-        "@crate_index//:serde_json",
-    ],
-)
